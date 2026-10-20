@@ -108,22 +108,12 @@ def bulk_insert(cursor, table_name, data):
     execute_values(cursor, query.as_string(cursor), values)
 
 def seed_users(cursor):
-    # drop users if it exists
-    # create users table
-    # read user data
-    # bulk insert user data
-    #drop_table(cursor, "users")#drop_users(cursor)
     create_users(cursor)
     user_data = read_data("db/data/users.json")
     user_data = bulk_normalise_users(user_data)
     bulk_insert(cursor, "users", user_data)
 
 def seed_venues(cursor):
-    # drop venues if it exists
-    # create venues table
-    # read venue data
-    # bul insert venue data
-    #drop_table(cursor, "venues")
     create_venues(cursor)
     venue_data = read_data("db/data/venues.json")
     #venue_data = bulk_normalise_venues(venue_data)
