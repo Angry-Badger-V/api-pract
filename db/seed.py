@@ -2,6 +2,7 @@
 import json
 import db.connection
 from psycopg2.extras import execute_values
+from src.seed.users import email_normalisation, name_normalisation, password_hashing
 
 def read_data(filepath):
     with open(filepath, "r") as file:
@@ -22,6 +23,16 @@ def create_users(cursor):
             created_at TIMESTAMP DEFAULT NOW()
         );
         """)
+
+def bulk_normalise_users(users):
+    result = []
+    for user in users:
+        result.append({
+            "name": name_normalisation(user),
+            "email": email_normalisation(user),
+            "password": password_hashing(user)
+        })
+    return result
 
 def bulk_insert_users(cursor, users):
     user_values = []
@@ -50,6 +61,7 @@ def seed_users(cursor):
     drop_users(cursor)
     create_users(cursor)
     user_data = read_data("data/users.json")
+    bulk_normalise_users(user_data)
     bulk_insert_users(cursor, user_data)
 
 def seed():
