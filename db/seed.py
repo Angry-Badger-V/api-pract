@@ -1,5 +1,7 @@
 # seed nc_plus_one db
 import json
+
+from _pytest.subtests import capturing_logs
 import db.connection
 from psycopg2 import sql
 from psycopg2.extras import execute_values
@@ -19,6 +21,10 @@ def drop_table(cursor, table_name):
     )
     cursor.execute(query)
 
+def drop_tables(cursor):
+    drop_table(cursor, "events")
+    drop_table(cursor, "venues")
+    drop_table(cursor, "users")
 
 def create_users(cursor):
     cursor.execute("""
@@ -41,14 +47,30 @@ def create_venues(cursor):
         );
         """)
 
+def create_events(cursor):
+    cursor.execute("""
+        CREATE TABLE events (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description VARCHAR(255),
+            starts_at TIMESTAMP NOT NULL,
+            ends_at TIMESTAMP NOT NULL, 
+            organiser_id INT REFERENCES users(id),
+            venue_id INT REFERENCES venues(id),
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+    """)
+
 def bulk_normalise_users(users):
     result = []
     for user in users:
-        result.append({
-            "name": name_normalisation(user)["name"],
-            "email": email_normalisation(user)["email"],
-            "password": password_hashing(user)["password"]
-        })
+        user = user.copy()
+
+        name_normalisation(user)
+        email_normalisation(user)
+        password_hashing(user)        
+        
+        result.append(user)
     return result
 
 def bulk_insert(cursor, table_name, data):
@@ -58,7 +80,7 @@ def bulk_insert(cursor, table_name, data):
     columns = list(data[0].keys())
 
     values = [
-        tuple(row[column] for column in columns)
+        tuple(row.get(column) for column in columns)
         for row in data
     ]
 
@@ -78,28 +100,36 @@ def seed_users(cursor):
     # create users table
     # read user data
     # bulk insert user data
-    drop_table(cursor, "users")#drop_users(cursor)
+    #drop_table(cursor, "users")#drop_users(cursor)
     create_users(cursor)
     user_data = read_data("db/data/users.json")
     user_data = bulk_normalise_users(user_data)
     bulk_insert(cursor, "users", user_data)
 
-def seed_values(cursor):
+def seed_venues(cursor):
     # drop venues if it exists
     # create venues table
     # read venue data
     # bul insert venue data
-    drop_table(cursor, "venues")
+    #drop_table(cursor, "venues")
     create_venues(cursor)
     venue_data = read_data("db/data/venues.json")
     #venue_data = bulk_normalise_venues(venue_data)
     bulk_insert(cursor, "venues", venue_data)
 
+def seed_events(cursor):
+    #drop_table(cursor, "events")
+    create_events(cursor)
+    event_data = read_data("db/data/events.json")
+    bulk_insert(cursor, "events", event_data)
+
 def seed():
     conn = db.connection.get_connection()
     cursor = conn.cursor()
+    drop_tables(cursor)
     seed_users(cursor)
-    seed_values(cursor)
+    seed_venues(cursor)
+    seed_events(cursor)
     conn.commit()
     cursor.close()
     conn.close()
