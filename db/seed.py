@@ -1,6 +1,12 @@
 # seed nc_plus_one db
 import json
 import db.connection
+from psycopg2.extras import execute_values
+
+def read_data(filepath):
+    with open(filepath, "r") as file:
+        data = json.load(file)
+    return data
 
 def drop_users(cursor):
     cursor.execute(
@@ -17,11 +23,24 @@ def create_users(cursor):
         );
         """)
 
-def read_users_data():
-    pass
+def bulk_insert_users(cursor, users):
+    user_values = []
 
-def bulk_insert_users():
-    pass
+    for user in users:
+        user_values.append((
+            user["email"],
+            user["password"],
+            user["name"]
+        ))
+
+    execute_values(
+            cursor,
+            """
+            INSERT INTO users (email, password, name)
+            VAKUES %s;
+            """,
+            user_values
+    )
 
 def seed_users(cursor):
     # drop users if it exists
@@ -30,6 +49,8 @@ def seed_users(cursor):
     # bulk insert user data
     drop_users(cursor)
     create_users(cursor)
+    user_data = read_data("data/users.json")
+    bulk_insert_users(cursor, user_data)
 
 def seed():
     conn = db.connection.get_connection()
