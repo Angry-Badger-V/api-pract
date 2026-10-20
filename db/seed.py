@@ -1,6 +1,7 @@
 # seed nc_plus_one db
 import json
 import db.connection
+from psycopg2 import sql
 from psycopg2.extras import execute_values
 from src.seed.users import email_normalisation, name_normalisation, password_hashing
 
@@ -9,9 +10,15 @@ def read_data(filepath):
         data = json.load(file)
     return data
 
-def drop_users(cursor):
-    cursor.execute(
-        "DROP TABLE IF EXISTS users CASCADE;")
+
+def drop_table(cursor, table_name):
+    query = sql.SQL(
+        "DROP TABLE IF EXISTS {} CASCADE;"
+    ).format(
+        sql.Identifier(table_name)
+    )
+    cursor.execute(query)
+
 
 def create_users(cursor):
     cursor.execute("""
@@ -24,50 +31,75 @@ def create_users(cursor):
         );
         """)
 
+def create_venues(cursor):
+    cursor.execute("""
+        CREATE TABLE venues (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            address TEXT,
+            capacity INT
+        );
+        """)
+
 def bulk_normalise_users(users):
     result = []
     for user in users:
         result.append({
-            "name": name_normalisation(user),
-            "email": email_normalisation(user),
-            "password": password_hashing(user)
+            "name": name_normalisation(user)["name"],
+            "email": email_normalisation(user)["email"],
+            "password": password_hashing(user)["password"]
         })
     return result
 
-def bulk_insert_users(cursor, users):
-    user_values = []
+def bulk_insert(cursor, table_name, data):
+    if not data:
+        return
 
-    for user in users:
-        user_values.append((
-            user["email"],
-            user["password"],
-            user["name"]
-        ))
+    columns = list(data[0].keys())
 
-    execute_values(
-            cursor,
-            """
-            INSERT INTO users (email, password, name)
-            VAKUES %s;
-            """,
-            user_values
+    values = [
+        tuple(row[column] for column in columns)
+        for row in data
+    ]
+
+    query = sql.SQL("""
+        INSERT INTO {} ({})
+        VALUES %s
+    """).format(
+        sql.Identifier(table_name),
+        sql.SQL(", ").join(
+            sql.Identifier(column) for column in columns
+        )
     )
 
+    execute_values(cursor, query.as_string(cursor), values)
 def seed_users(cursor):
     # drop users if it exists
     # create users table
     # read user data
     # bulk insert user data
-    drop_users(cursor)
+    drop_table(cursor, "users")#drop_users(cursor)
     create_users(cursor)
-    user_data = read_data("data/users.json")
-    bulk_normalise_users(user_data)
-    bulk_insert_users(cursor, user_data)
+    user_data = read_data("db/data/users.json")
+    user_data = bulk_normalise_users(user_data)
+    bulk_insert(cursor, "users", user_data)
+
+def seed_values(cursor):
+    # drop venues if it exists
+    # create venues table
+    # read venue data
+    # bul insert venue data
+    drop_table(cursor, "venues")
+    create_venues(cursor)
+    venue_data = read_data("db/data/venues.json")
+    #venue_data = bulk_normalise_venues(venue_data)
+    bulk_insert(cursor, "venues", venue_data)
 
 def seed():
     conn = db.connection.get_connection()
     cursor = conn.cursor()
     seed_users(cursor)
+    seed_values(cursor)
     conn.commit()
     cursor.close()
     conn.close()
