@@ -1,5 +1,6 @@
 # seed nc_plus_one db
 import json
+from os import read
 
 from _pytest.subtests import capturing_logs
 import db.connection
@@ -12,7 +13,6 @@ def read_data(filepath):
         data = json.load(file)
     return data
 
-
 def drop_table(cursor, table_name):
     query = sql.SQL(
         "DROP TABLE IF EXISTS {} CASCADE;"
@@ -22,6 +22,7 @@ def drop_table(cursor, table_name):
     cursor.execute(query)
 
 def drop_tables(cursor):
+    drop_table(cursor, "rsvps")
     drop_table(cursor, "events")
     drop_table(cursor, "venues")
     drop_table(cursor, "users")
@@ -61,6 +62,16 @@ def create_events(cursor):
         );
     """)
 
+def create_rsvps(cursor):
+    cursor.execute("""
+        CREATE TABLE rsvps (
+            id SERIAL PRIMARY KEY,
+            attendee_id INT REFERENCES users(id),
+            event_id INT REFERENCES events(id),
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        """)
+
 def bulk_normalise_users(users):
     result = []
     for user in users:
@@ -95,6 +106,7 @@ def bulk_insert(cursor, table_name, data):
     )
 
     execute_values(cursor, query.as_string(cursor), values)
+
 def seed_users(cursor):
     # drop users if it exists
     # create users table
@@ -123,6 +135,11 @@ def seed_events(cursor):
     event_data = read_data("db/data/events.json")
     bulk_insert(cursor, "events", event_data)
 
+def seed_rsvps(cursor):
+    create_rsvps(cursor)
+    rsvps_data = read_data("db/data/rsvps.json")
+    bulk_insert(cursor, "rsvps", rsvps_data)
+
 def seed():
     conn = db.connection.get_connection()
     cursor = conn.cursor()
@@ -130,6 +147,7 @@ def seed():
     seed_users(cursor)
     seed_venues(cursor)
     seed_events(cursor)
+    seed_rsvps(cursor)
     conn.commit()
     cursor.close()
     conn.close()
