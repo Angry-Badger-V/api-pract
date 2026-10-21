@@ -26,6 +26,6 @@ def select_user_by_email(user_auth: UserAuth) -> dict:
     finally:
         conn.close()   
 
-def authorise_user(user_auth: UserAuth):
+def authorise_user(user_auth: UserAuth) -> str|None:
     user = select_user_by_email(user_auth)
     return user_util.password_authorise(user["email"], user_auth.password, user["password"])
