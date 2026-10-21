@@ -17,3 +17,6 @@ Install project dependencies:
 ```
 pip install -r requirements.txt
 ```
+For info on specific dependency versions see requirements.txt
+
+
