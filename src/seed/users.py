@@ -13,22 +13,19 @@ ph = PasswordHasher()
 SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 ALGORITHM = os.environ["JWT_ALGO"]
 
-def name_normalisation(user):
+def name_normalisation(user: dict) -> None:
     user["name"] = " ".join(
             user["name"].split())
-    return user
 
-def email_normalisation(user):
+def email_normalisation(user: dict) -> None:
     user["email"] = "".join(
             user["email"].split()
             ).lower()
-    return user
-
-def password_hashing(user):
+    
+def password_hashing(user: dict) -> None:
     user["password"] = ph.hash(
             user["password"])
-    return user
-
+    
 def password_authorise(email: str, password: str, hashed_password: str) -> str|None:
     print(f"email: {email}\nhased: {hashed_password}\npass: {password}")
     try:
