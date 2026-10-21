@@ -25,3 +25,24 @@ def select_all_events():
 
     finally:
         conn.close()
+
+def select_event(id):
+    conn = get_connection()
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT
+                    e.*
+                FROM
+                    events e
+                WHERE
+                    e.id = %s
+            """, (id,))
+
+            event = cursor.fetchone()
+
+            return event
+    
+    finally:
+        conn.close()
