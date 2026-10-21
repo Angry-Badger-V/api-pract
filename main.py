@@ -1,10 +1,17 @@
 from db.connection import get_connection
 from psycopg2.extras import RealDictCursor
 from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
 from src.models.events import select_all_events, select_event
 from src.models.users import UserAuth, authorise_user
+from src.exceptions.handlers import validation_exception_handler
 
 app = FastAPI()
+
+app.add_exception_handler(
+    RequestValidationError,
+    validation_exception_handler
+)
 
 @app.get("/api/events")
 def get_events():
