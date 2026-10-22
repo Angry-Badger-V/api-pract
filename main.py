@@ -1,9 +1,7 @@
-import psycopg2
 import fastapi
-import src.models.events as events
-import src.models.users as users
-import db.connection as db_connection
-import src.exceptions.handlers as exception_handlers
+
+from src.routes import events, auth
+from src.exceptions import handlers as exception_handlers
 
 app = fastapi.FastAPI()
 
@@ -12,31 +10,5 @@ app.add_exception_handler(
     exception_handlers.validation_exception_handler
 )
 
-@app.get("/api/events")
-def get_events():
-    events = events.select_all_events()
-    return {"events": events}
-
-@app.get("/api/events/{id}")
-def get_events(id: int):
-    event = events.select_event(id)
-    return {"event": event}
-
-@app.post("/api/auth/login")
-def get_hash(user_auth: users.UserAuth):
-    token = users.authorise_user(user_auth)
-    if token is None:
-        raise fastapi.HTTPException(
-                status_code=401,
-                detail="Invalid email or password")
-    return {"token": token}
-
-@app.post("/api/auth/register", status_code=201)
-def do_register(user_reg: users.UserReg):
-    user = users.register_user(user_reg)
-    if user is None:
-        raise fastapi.HTTPException(
-                status_code=409,
-                detail="Email already registered"
-        )
-    return {"user": user}
+app.include_router(events.router)
+app.include_router(auth.router)
