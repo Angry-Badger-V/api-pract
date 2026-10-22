@@ -1,6 +1,12 @@
 from fastapi import APIRouter, HTTPException
 
-from src.schemas.users import UserAuth, UserReg
+from src.schemas.users import (
+    UserAuth,
+    UserReg,
+    TokenResponse,
+    RegisterResponse
+)
+
 from src.services.auth import authorise_user, register_user
 
 router = APIRouter(
@@ -8,7 +14,7 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(user_auth: UserAuth):
     token = authorise_user(user_auth)
 
@@ -20,7 +26,11 @@ def login(user_auth: UserAuth):
 
     return {"token": token}
 
-@router.post("/register", status_code=201)
+@router.post(
+    "/register",
+    response_model=RegisterResponse,
+    status_code=201
+)
 def register(user_reg: UserReg):
     user = register_user(user_reg)
 
