@@ -36,16 +36,8 @@ def authorise_user(user_auth: UserAuth) -> str|None:
 
 def register_user(user_reg: UserReg) -> dict|None:
     user = {"name": user_reg.name, "email": user_reg.email, "password": user_reg.password} 
-    user_util.normalise_user(user)
-    print(f"normalised user: {user}")
-    ans = select_user_by_email(user)
-    print(f"selecting user result: {ans}")
-    if ans is not None: # user already exists 409 Conflict
-        print("EARLY RETURN")
+    user_util.normalise_user(user) 
+    if select_user_by_email(user) is not None: # user already exists 409 Conflict
         return None
     user_util.user_insert(user)
-    ans2 = select_user_by_email(user)
-    print(f"select user result 2: {ans2}")
-    return ans2 # will return None if failed to insert # TODO: make this raise error other than 409
-
-    
+    return select_user_by_email(user) # will return None if failed to insert # TODO: make this raise error other than 409 
