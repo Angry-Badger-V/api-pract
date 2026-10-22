@@ -25,4 +25,4 @@ def get_event(event_id: int):
             detail="Event not found"
         )
 
-    return {"event": event}t}
+    return {"event": event}
