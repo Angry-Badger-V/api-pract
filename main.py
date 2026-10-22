@@ -31,9 +31,12 @@ def get_hash(user_auth: users.UserAuth):
                 detail="Invalid email or password")
     return {"token": token}
 
-#@app.post("api/auth/register")
-#def do_register(user_reg: UserReg):
-#    user = register_user(user_reg)
-#    if user is None:
-#        raise HTTPException
-#    return {"user": user}
+@app.post("/api/auth/register", status_code=201)
+def do_register(user_reg: users.UserReg):
+    user = users.register_user(user_reg)
+    if user is None:
+        raise fastapi.HTTPException(
+                status_code=409,
+                detail="Email already registered"
+        )
+    return {"user": user}

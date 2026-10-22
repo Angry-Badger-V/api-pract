@@ -1,33 +1,51 @@
 from psycopg2.extras import RealDictCursor
-
 from db.connection import get_connection
 from pydantic import BaseModel
 
 import src.seed.users as user_util
 
-class User(BaseModel):
-    name: str#,
-
 class UserAuth(BaseModel):
     email: str
     password: str
 
-def select_user_by_email(user_auth: UserAuth) -> dict:
+class UserReg(BaseModel):
+    name: str
+    email: str
+    password: str
+
+def select_user_by_email(user: dict) -> dict|None:
     conn = get_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
                 SELECT * FROM users
                 WHERE email = %s;
-            """, (user_auth.email,))
+            """, (user["email"],))
             user = cursor.fetchone()
             return user
-
     finally:
-        conn.close()   
+        conn.close()
 
 def authorise_user(user_auth: UserAuth) -> str|None:
-    user = select_user_by_email(user_auth)
+    user_email = {"email": user_auth.email}
+    user_util.email_normalisation(user_email)
+    user = select_user_by_email(user_email)
     if user is None:
         return None
     return user_util.password_authorise(user["email"], user_auth.password, user["password"])
+
+def register_user(user_reg: UserReg) -> dict|None:
+    user = {"name": user_reg.name, "email": user_reg.email, "password": user_reg.password} 
+    user_util.normalise_user(user)
+    print(f"normalised user: {user}")
+    ans = select_user_by_email(user)
+    print(f"selecting user result: {ans}")
+    if ans is not None: # user already exists 409 Conflict
+        print("EARLY RETURN")
+        return None
+    user_util.user_insert(user)
+    ans2 = select_user_by_email(user)
+    print(f"select user result 2: {ans2}")
+    return ans2 # will return None if failed to insert # TODO: make this raise error other than 409
+
+    
