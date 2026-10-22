@@ -12,7 +12,7 @@ from argon2.exceptions import (
 ph = PasswordHasher()
 
 SECRET_KEY = os.environ["JWT_SECRET_KEY"]
-ALGORITHM = os.environ["JwT_ALGO"]
+ALGORITHM = os.environ["JWT_ALGO"]
 
 def hash_password(password: str) -> str:
     return ph.hash(password)
