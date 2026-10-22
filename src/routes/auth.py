@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
-import src.models.users as users
+
+from src.schemas.users import UserAuth, UserReg
+from src.services.auth import authorise_user, register_user
 
 router = APIRouter(
     prefix="/api/auth",
@@ -7,8 +9,8 @@ router = APIRouter(
 )
 
 @router.post("/login")
-def login(user_auth: users.UserAuth):
-    token = users.authorise_user(user_auth)
+def login(user_auth: UserAuth):
+    token = authorise_user(user_auth)
 
     if token is None:
         raise HTTPException(
@@ -18,10 +20,9 @@ def login(user_auth: users.UserAuth):
 
     return {"token": token}
 
-
 @router.post("/register", status_code=201)
-def register(user_reg: users.UserReg):
-    user = users.register_user(user_reg)
+def register(user_reg: UserReg):
+    user = register_user(user_reg)
 
     if user is None:
         raise HTTPException(
