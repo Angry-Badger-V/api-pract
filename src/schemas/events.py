@@ -1,6 +1,13 @@
 from datetime import datetime
 from pydantic import BaseModel
 
+class EventCreate(BaseModel):
+    title: str
+    description: str | None
+    starts_at: datetime
+    ends_at: datetime
+    venue_id: int
+
 class EventSummary(BaseModel):
     id: int
     title: str
@@ -23,6 +30,9 @@ class RsvpDetail(BaseModel):
     attendee_id: int
     event_id: int
     created_at: datetime
+
+class EventCreateResponse(BaseModel):
+    event: EventDetail
 
 class EventsResponse(BaseModel):
     events: list[EventSummary]
