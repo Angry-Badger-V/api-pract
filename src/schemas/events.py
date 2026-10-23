@@ -18,8 +18,17 @@ class EventDetail(BaseModel):
     venue_id: int | None
     created_at: datetime | None
 
+class RsvpDetail(BaseModel):
+    id: int
+    attendee_id: int
+    event_id: int
+    created_at: datetime
+
 class EventsResponse(BaseModel):
     events: list[EventSummary]
 
 class EventResponse(BaseModel):
     event: EventDetail
+
+class EventRsvpResponse(BaseModel):
+    rsvp: RsvpDetail

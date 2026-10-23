@@ -18,7 +18,7 @@ def authorise_user(user_auth: UserAuth) -> str | None:
     if not verify_password(user_auth.password, user["password"]):
         return None
 
-    return create_access_token(user["email"])
+    return create_access_token(user["id"])
 
 def register_user(user_reg: UserReg) -> dict | None:
     name = normalise_name(user_reg.name)

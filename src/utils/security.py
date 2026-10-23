@@ -23,10 +23,10 @@ def verify_password(password: str, hashed_password: str) -> bool:
     except (VerifyMismatchError, VerificationError, InvalidHashError):
         return False
 
-def create_access_token(email: str) -> str:
+def create_access_token(user_id: int) -> str:
     return jwt.encode(
         {
-            "sub": email,
+            "sub": str(user_id),
             "exp": datetime.datetime.now(
                 datetime.timezone.utc
             ) + datetime.timedelta(minutes=20)
