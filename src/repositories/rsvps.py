@@ -71,3 +71,28 @@ def delete_rsvp(event_id: int, attendee_id: int) -> dict:
     
     finally:
         conn.close()
+
+def get_event_attendees(event_id: int) -> list[dict]:
+    conn = get_connection()
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT
+                    users.id,
+                    users.name,
+                    users.email
+                FROM rsvps
+                JOIN users
+                    ON rsvps.attendee_id = users.id
+                WHERE rsvps.event_id = %s;
+            """, (event_id,))
+
+            attendees = [
+                dict(row) for row in cursor.fetchall()
+            ]
+
+        return attendees
+
+    finally:
+        conn.close()

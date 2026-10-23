@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class EventCreate(BaseModel):
     title: str
@@ -7,6 +7,13 @@ class EventCreate(BaseModel):
     starts_at: datetime
     ends_at: datetime
     venue_id: int
+
+class EventUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    starts_at: datetime | None = None
+    ends_at: datetime | None = None
+    venue_id: int | None = None
 
 class EventSummary(BaseModel):
     id: int
@@ -25,6 +32,11 @@ class EventDetail(BaseModel):
     venue_id: int | None
     created_at: datetime | None
 
+class EventAttendee(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
 class RsvpDetail(BaseModel):
     id: int
     attendee_id: int
@@ -42,3 +54,9 @@ class EventResponse(BaseModel):
 
 class EventRsvpResponse(BaseModel):
     rsvp: RsvpDetail
+
+class EventUpdateResponse(BaseModel):
+    event: EventDetail
+
+class EventAttendeeResponse(BaseModel):
+    attendees: list[EventAttendee]

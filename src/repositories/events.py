@@ -1,5 +1,6 @@
 from datetime import datetime
 from db.connection import get_connection
+from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 
 def select_all_events() -> list[dict]:
@@ -65,6 +66,55 @@ def insert_event(title: str, description: str|None,
 
         conn.commit()
         return event
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+def update_event(event_id: int, updates: dict) -> dict | None:
+    if not updates:
+        return None
+
+    allowed_fields = {
+        "title",
+        "description",
+        "starts_at",
+        "ends_at",
+        "venue_id"
+    }
+
+    if not set(updates).issubset(allowed_fields):
+        raise ValueError("Invalid fields provided")
+
+    conn = get_connection()
+
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            fields = [
+                sql.SQL("{} = %s").format(sql.Identifier(field))
+                for field in updates
+            ]
+
+            query = sql.SQL("""
+                UPDATE events
+                SET {}
+                WHERE id = %s
+                RETURNING *;
+            """).format(sql.SQL(", ").join(fields))
+
+            values = list(updates.values()) + [event_id]
+
+            cursor.execute(query, values)
+
+            result = cursor.fetchone()
+            updated_event = dict(result) if result else None
+
+        conn.commit()
+
+        return updated_event
+
     except Exception:
         conn.rollback()
         raise
